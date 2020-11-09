@@ -5,7 +5,7 @@
 
 Diy_Core() {
 Author=lean
-Default_Device=x86-64
+Default_Device=generic
 
 AutoUpdate_Version=`awk 'NR==6' ./package/base-files/files/bin/AutoUpdate.sh | awk -F'[="]+' '/Version/{print $2}'`
 Compile_Date=`date +'%Y/%m/%d'`
