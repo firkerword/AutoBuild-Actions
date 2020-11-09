@@ -87,7 +87,7 @@ Diy-Part1() {
 [ ! -d ./package/lean ] && mkdir ./package/lean
 
 # mv2 feeds.conf.default
-
+mv2 AutoUpdate.sh package/base-files/files/bin
 
 # ExtraPackages svn mac80211 https://github.com/openwrt/openwrt/trunk/package/kernel
 # rm -rf package/kernel/mac80211 && mv -f package/lean/mac80211 package/kernel
