@@ -8,21 +8,16 @@
 
 name: AutoBuild OpenWrt
 
-on: 
-#  release:
-#    types: [published]
-
-#  push:
-#    branches:
-#      - main
-#    paths:
-#      - '.config'
-
+on:
+  repository_dispatch:
+  workflow_dispatch:
+    inputs:
+      ssh:
+        description: 'SSH connection to Actions'
+        required: false
+        default: 'false'
 #  schedule:
-#    - cron: 0 8 * * 5
-  
-  watch:
-    types: [started]
+#    - cron: 0 21 */3 * *
 
 env:
   REPO_URL: https://github.com/coolsnowwolf/lede
@@ -39,10 +34,10 @@ jobs:
     runs-on: ubuntu-18.04
 
     steps:
-    - name: Checkout
+    - name: 检查项目分支
       uses: actions/checkout@main
 
-    - name: Initialization Environment
+    - name: 安装编译环境
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
@@ -54,63 +49,70 @@ jobs:
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
 
-    - name: Clone Openwrt source code
+    - name: 下载固件源码
       run: |
         git clone -b $REPO_BRANCH $REPO_URL openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
-    - name: Run Diy-Part1 Scripts
+    - name: 加载自定义设置
       run: |
         chmod +x $CUSTOM_SCRIPT
         cd openwrt
         source $GITHUB_WORKSPACE/$CUSTOM_SCRIPT && Diy-Part1
 
-    - name: Update & Install Feeds
+    - name: 下载安装插件
       run: |
         cd openwrt
         ./scripts/feeds update -a
         ./scripts/feeds install -a
 
-    - name: Run Diy-Part2 Scripts
+    - name: 更改配置
       run: |
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
         cd openwrt
         source $GITHUB_WORKSPACE/$CUSTOM_SCRIPT && Diy-Part2
 
-    - name: Download Packages
+    - name: 下载安装包
       run: |
         cd openwrt
         make defconfig
         make download -j$(nproc) V=s
         find dl -size -1024c -exec rm -f {} \;
+        
+    - name: SSH链接管理
+      uses: P3TERX/ssh2actions@v1.0.0
+      if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
+      env:
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
 
-    - name: Compile the Openwrt
+    - name: 开始编译固件
       run: |
         cd openwrt
         make -j$(nproc) || make -j1 V=s
 
-    - name: Run Diy-Part3 Scripts
+    - name: 创建更新日志
       run: |
         echo "## $(date +"%Y%m%d")-AutoBuild" > update_log.txt
         cd openwrt
         source $GITHUB_WORKSPACE/$CUSTOM_SCRIPT && Diy-Part3
         echo "Artifacts_DATE=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
 
-    - name: Upload Firmware to Artifacts
+    - name: 上传固件到Artifacts
       uses: actions/upload-artifact@main
       if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
       with:
         name: OpenWrt_Firmware_${{ env.Artifacts_DATE }}
         path: openwrt/bin/Firmware
         
-    - name: Upload Firmware directory to Artifacts
+    - name: 上传bin目录
       uses: actions/upload-artifact@main
       if: env.UPLOAD_BIN_DIR == 'true' && !cancelled()
       with:
         name: OpenWrt_bin_${{ env.Artifacts_DATE }}
         path: openwrt/bin
 
-    - name: Upload Firmware to Releases
+    - name: 上传固件到Releases
       uses: softprops/action-gh-release@v1
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       env:
@@ -120,7 +122,7 @@ jobs:
         body_path: update_log.txt
         files: openwrt/bin/Firmware/*
 
-    - name: Remove old Artifacts
+    - name: 删除旧的Artifacts
       uses: c-hive/gha-remove-artifacts@v1
       with:
         age: '1 day'
