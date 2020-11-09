@@ -4,8 +4,8 @@
 # AutoBuild Actions
 
 Diy_Core() {
-Author=Hyy2001
-Default_Device=d-team_newifi-d2
+Author=lean
+Default_Device=x86-64
 
 AutoUpdate_Version=`awk 'NR==6' ./package/base-files/files/bin/AutoUpdate.sh | awk -F'[="]+' '/Version/{print $2}'`
 Compile_Date=`date +'%Y/%m/%d'`
@@ -87,20 +87,10 @@ Diy-Part1() {
 [ ! -d ./package/lean ] && mkdir ./package/lean
 
 # mv2 feeds.conf.default
-mv2 mac80211.sh package/kernel/mac80211/files/lib/wifi
-mv2 system package/base-files/files/etc/config
-mv2 AutoUpdate.sh package/base-files/files/bin
-mv2 banner package/base-files/files/etc
-mv2 mt76.mk package/kernel/mt76 Makefile
+
 
 # ExtraPackages svn mac80211 https://github.com/openwrt/openwrt/trunk/package/kernel
 # rm -rf package/kernel/mac80211 && mv -f package/lean/mac80211 package/kernel
-ExtraPackages svn dnsmasq https://github.com/openwrt/openwrt/trunk/package/network/services
-rm -rf package/network/services/dnsmasq && mv -f package/lean/dnsmasq package/network/services
-ExtraPackages svn hostapd https://github.com/openwrt/openwrt/trunk/package/network/services
-rm -rf package/network/services/hostapd && mv -f package/lean/hostapd package/network/services
-ExtraPackages svn dropbear https://github.com/openwrt/openwrt/trunk/package/network/services
-rm -rf package/network/services/dropbear && mv -f package/lean/dropbear package/network/services
 
 ExtraPackages git luci-app-autoupdate https://github.com/Hyy2001X main
 ExtraPackages git luci-theme-argon https://github.com/jerrykuku 18.06
@@ -123,7 +113,6 @@ ExtraPackages svn luci-app-socat https://github.com/xiaorouji/openwrt-package/tr
 
 Diy-Part2() {
 GET_TARGET_INFO
-mv2 mwan3 package/feeds/packages/mwan3/files/etc/config
 echo "Author: $Author"
 echo "Lede Version: $Openwrt_Version"
 echo "AutoUpdate Version: $AutoUpdate_Version"
@@ -135,8 +124,8 @@ sed -i "s?Openwrt?Openwrt $Openwrt_Version / AutoUpdate $AutoUpdate_Version?g" .
 
 Diy-Part3() {
 GET_TARGET_INFO
-Default_Firmware=openwrt-$TARGET_BOARD-$TARGET_SUBTARGET-$TARGET_PROFILE-squashfs-sysupgrade.bin
-AutoBuild_Firmware=AutoBuild-$TARGET_PROFILE-Lede-${Openwrt_Version}.bin
+Default_Firmware=openwrt-$TARGET_BOARD-$TARGET_SUBTARGET-$TARGET_PROFILE-squashfs-sysupgrade.img.gz
+AutoBuild_Firmware=AutoBuild-$TARGET_PROFILE-Lede-${Openwrt_Version}.img.gz
 AutoBuild_Detail=AutoBuild-$TARGET_PROFILE-Lede-${Openwrt_Version}.detail
 mkdir -p ./bin/Firmware
 echo "Firmware: $AutoBuild_Firmware"
