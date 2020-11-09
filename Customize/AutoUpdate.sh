@@ -4,7 +4,7 @@
 # AutoUpdate
 
 Version=V3.9
-DEFAULT_DEVICE=x86-64
+DEFAULT_DEVICE=generic
 Github=https://github.com/firkerword/AutoBuild-Actions
 
 TIME() {
